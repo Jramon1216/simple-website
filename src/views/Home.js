@@ -15,9 +15,10 @@ export default function Home() {
         return new Promise((resolve, reject) => {
             api.get('/receive/')
                 .then(response => {
-                    console.log(response.data)
+                    console.log('Receiving message...')
                     const receivedMessage = response.data['RECEIVED MESSAGE'];
                     setReceivedMessages(prevMessages => [...prevMessages, { text: receivedMessage, type: 'received' }]);
+                    console.log('Message received!')
                     resolve(response.data)
                 })
                 .catch(error => {
@@ -35,7 +36,8 @@ export default function Home() {
                     console.log(`Sending user message:'${sentMessage}'...`)
                     setReceivedMessages(prevMessages => [...prevMessages, { text: sentMessage, type: 'sent' }]);
                     setSentMessage('');
-                    resolve(response.data)
+                    console.log('Message sent successfully!')
+                    resolve(response.status)
                 })
                 .catch(error => {
                     console.error('Error sending data: ', error);
@@ -45,13 +47,24 @@ export default function Home() {
         });
     };
 
-
     const handleInputChange = (e) => {
         setSentMessage(e.target.value);
     };
 
-    const handleSendClick = () => {
-        sendMessage();
+    const handleSendClick = async () => {
+        try {
+            await sendMessage();
+        } catch (error) {
+            setError(error);
+        }
+    };
+
+    const handleReceiveClick = async () => {
+        try {
+            await receiveMessage();
+        } catch (error) {
+            setError(error);
+        }
     };
 
     return (
@@ -65,7 +78,7 @@ export default function Home() {
                     onChange={handleInputChange}
                 />
                 <input type="button" value="Send" onClick={handleSendClick}></input>
-                <input type="button" value="Receive" onClick={receiveMessage}></input>
+                <input type="button" value="Receive" onClick={handleReceiveClick}></input>
 
             </form>
             {error && <div>Error: {error.message}</div>}
