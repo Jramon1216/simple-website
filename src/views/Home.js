@@ -1,12 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
 import classNames from "classnames";
 import styles from '../styles/Home.module.scss'
-
-
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:8000/',
-})
+import api from '../api'
 
 export default function Home() {
     const [sentMessage, setSentMessage] = useState('');
