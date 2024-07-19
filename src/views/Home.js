@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import classNames from "classnames";
 import styles from '../styles/Home.module.scss'
+
 
 const api = axios.create({
     baseURL: 'http://127.0.0.1:8000/',
@@ -10,6 +12,7 @@ export default function Home() {
     const [sentMessage, setSentMessage] = useState('');
     const [receivedMessages, setReceivedMessages] = useState([]);
     const [error, setError] = useState(null);
+    const endOfMessagesRef = useRef(null);
 
     const receiveMessage = async () => {
         return new Promise((resolve, reject) => {
@@ -67,28 +70,39 @@ export default function Home() {
         }
     };
 
-    return (
-        <>
-            <h1>Send a message!</h1>
-            <form onSubmit={e => e.preventDefault()}>
-                <input
-                    type="text"
-                    placeholder="Send a Message"
-                    value={sentMessage}
-                    onChange={handleInputChange}
-                />
-                <input type="button" value="Send" onClick={handleSendClick}></input>
-                <input type="button" value="Receive" onClick={handleReceiveClick}></input>
+    useEffect(() => {
+        endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [receivedMessages]);
 
-            </form>
+    return (
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <h1>Send a message!</h1>
+            </div>
+            <hr />
             {error && <div>Error: {error.message}</div>}
-            <div>
+            <div className={styles.chat}>
                 {receivedMessages.map((msg, index) => (
                     <div key={index} className={msg.type === 'sent' ? styles.sent : styles.received}>
                         {msg.text}
                     </div>
                 ))}
+                <div ref={endOfMessagesRef} /> 
             </div>
-        </>
-    )
-}
+                <hr/>
+            <div className={styles.controls}>
+                <form onSubmit={e => e.preventDefault()}>
+                    <input type="button" value="Receive" onClick={handleReceiveClick} className={classNames(styles.buttons, styles.receiveButton)}></input>
+                    <input
+                        type="text"
+                        placeholder="Send a Message"
+                        value={sentMessage}
+                        onChange={handleInputChange}
+                        className={styles.textBox}
+                    />
+                    <input type="button" value="Send" onClick={handleSendClick} className={classNames(styles.buttons, styles.sendButton)}></input>
+                </form>
+            </div>
+        </div>
+    );
+};
