@@ -3,3 +3,4 @@ Future Project Plans/Features:
 * Profanity filter
 * Add more error handling and components to display error messages on screen
 * Styling for mobile devices
+* Hide API url's
