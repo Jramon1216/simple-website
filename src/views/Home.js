@@ -94,6 +94,7 @@ export default function Home() {
                         value={sentMessage}
                         onChange={handleInputChange}
                         className={styles.textBox}
+                        maxLength="100"
                     />
                     <input type="button" value="Send" onClick={handleSendClick} className={classNames(styles.buttons, styles.sendButton)}></input>
                 </form>
