@@ -7,8 +7,9 @@ This project was made for the first step of an interview process for a job I app
 ## Future Project Plans/Features:
 * ~~Character limit for messages to comply with database constraints~~
 * Set up a character counter so the user can know when they are coming up on the imposed limit
-* Profanity filter
+* ~~Profanity filter~~
 * Add more error handling and components to display error messages on screen
 * Styling for mobile devices
 * Hide API URLs
 * Add filters to avoid personal info being sent as a message to the public database
+* Use gitflow for development
