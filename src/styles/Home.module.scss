@@ -91,6 +91,12 @@ hr {
             background-color: #2BCB96;
             color: #fff;
         }
+        &:disabled {
+            transition: none;
+            color: grey;
+            background-color: #fff;
+            cursor: default;
+        }
 
     }
 

@@ -9,20 +9,44 @@ export default function Home() {
     const [error, setError] = useState(null);
     const endOfMessagesRef = useRef(null);
 
+    const profanityCall = async(message = sentMessage) => {
+        try{
+            const response = await fetch('https://vector.profanity.dev', {
+
+                method: 'POST',
+
+                headers: { 'Content-Type': 'application/json' },
+
+                body: JSON.stringify({ message }),
+
+            });
+            
+            if (!response.ok) {
+                throw new Error('Error getting ok response');
+            }
+
+            const result = await response.json();
+            return result["score"];
+        } catch(error){
+            console.error(error);
+        }
+    }
+
     const receiveMessage = async () => {
         return new Promise((resolve, reject) => {
             api.get('/receive/')
                 .then(response => {
-                    console.log('Receiving message...')
+                    console.log('Receiving message...');
                     const receivedMessage = response.data['RECEIVED MESSAGE'];
                     setReceivedMessages(prevMessages => [...prevMessages, { text: receivedMessage, type: 'received' }]);
-                    console.log('Message received!')
-                    resolve(response.data)
+                    setError(null)
+                    console.log('Message received!');
+                    resolve(response.data);
                 })
                 .catch(error => {
-                    console.error('Error fetching data: ', error)
-                    setError(error)
-                    reject(error)
+                    console.error('Error fetching data: ', error);
+                    setError(error);
+                    reject(error);
                 });
         });
     };
@@ -31,16 +55,28 @@ export default function Home() {
         return new Promise((resolve, reject) => {
             api.post('/send/', { "user_message": sentMessage })
                 .then(response => {
-                    console.log(`Sending user message:'${sentMessage}'...`)
-                    setReceivedMessages(prevMessages => [...prevMessages, { text: sentMessage, type: 'sent' }]);
-                    setSentMessage('');
-                    console.log('Message sent successfully!')
-                    resolve(response.status)
+                    console.log(`Sending user message:'${sentMessage}'...`);
+                    profanityCall(sentMessage).then(score =>{
+                        if (score < 0.8200) {
+                            setReceivedMessages(prevMessages => [...prevMessages, { text: sentMessage, type: 'sent' }]);
+                            setSentMessage('');
+                            setError(null)
+                            console.log('Message sent successfully!');
+                            resolve(response.status);
+                        } else {
+                            setError('Please exclude any possible profanity in your message!!!');
+                            reject('Possible profanity detected, rejecting message');
+                            console.log('MESSAGE REJECTED');
+                        }
+                    }).catch(error =>{
+                        console.error('Error in profanity checkin process', error);
+                        setError('Error in profanity checking process!!\nPlease try again later');
+                    })
                 })
                 .catch(error => {
                     console.error('Error sending data: ', error);
                     setError(error);
-                    reject(error)
+                    reject(error);
                 })
         });
     };
@@ -75,7 +111,7 @@ export default function Home() {
                 <h1>Send a message!</h1>
             </div>
             <hr />
-            {error && <div>Error: {error.message}</div>}
+            {error && <div>Error: {error}</div>}
             <div className={styles.chat}>
                 {receivedMessages.map((msg, index) => (
                     <div key={index} className={msg.type === 'sent' ? styles.sent : styles.received}>
@@ -87,16 +123,17 @@ export default function Home() {
                 <hr/>
             <div className={styles.controls}>
                 <form onSubmit={e => e.preventDefault()}>
-                    <input type="button" value="Receive" onClick={handleReceiveClick} className={classNames(styles.buttons, styles.receiveButton)}></input>
+                    <input type="button" value="Receive" onClick={handleReceiveClick} className={classNames(styles.buttons, styles.receiveButton)}/>
                     <input
                         type="text"
                         placeholder="Send a Message"
                         value={sentMessage}
                         onChange={handleInputChange}
                         className={styles.textBox}
+                        minLength="1"
                         maxLength="100"
                     />
-                    <input type="button" value="Send" onClick={handleSendClick} className={classNames(styles.buttons, styles.sendButton)}></input>
+                    <input type="button" value="Send" onClick={handleSendClick} className={classNames(styles.buttons, styles.sendButton)} disabled={!sentMessage.trim()} />
                 </form>
             </div>
         </div>
