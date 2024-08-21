@@ -1,36 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
 import classNames from "classnames";
 import styles from '../styles/Home.module.scss'
-import api from '../api'
+import  api, { profanityCall } from '../api/api'
 
 export default function Home() {
     const [sentMessage, setSentMessage] = useState('');
     const [receivedMessages, setReceivedMessages] = useState([]);
     const [error, setError] = useState(null);
     const endOfMessagesRef = useRef(null);
-
-    const profanityCall = async(message = sentMessage) => {
-        try{
-            const response = await fetch('https://vector.profanity.dev', {
-
-                method: 'POST',
-
-                headers: { 'Content-Type': 'application/json' },
-
-                body: JSON.stringify({ message }),
-
-            });
-            
-            if (!response.ok) {
-                throw new Error('Error getting ok response');
-            }
-
-            const result = await response.json();
-            return result["score"];
-        } catch(error){
-            console.error(error);
-        }
-    }
 
     const receiveMessage = async () => {
         return new Promise((resolve, reject) => {
