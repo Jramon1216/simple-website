@@ -25,7 +25,8 @@ const profanityCall = async (message) => {
         const result = await response.json();
         return result["score"];
     } catch (error) {
-        console.error(error);
+        console.error('Error in profanity checking process',error);
+        throw new Error(error);
     }
 }
 

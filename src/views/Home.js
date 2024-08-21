@@ -6,56 +6,49 @@ import  api, { profanityCall } from '../api/api'
 export default function Home() {
     const [sentMessage, setSentMessage] = useState('');
     const [receivedMessages, setReceivedMessages] = useState([]);
-    const [error, setError] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
     const endOfMessagesRef = useRef(null);
 
     const receiveMessage = async () => {
-        return new Promise((resolve, reject) => {
-            api.get('/receive/')
-                .then(response => {
-                    console.log('Receiving message...');
-                    const receivedMessage = response.data['RECEIVED MESSAGE'];
-                    setReceivedMessages(prevMessages => [...prevMessages, { text: receivedMessage, type: 'received' }]);
-                    setError(null)
-                    console.log('Message received!');
-                    resolve(response.data);
-                })
-                .catch(error => {
-                    console.error('Error fetching data: ', error);
-                    setError(error);
-                    reject(error);
-                });
-        });
+        try {
+            if (errorMsg) setErrorMsg(null)
+            
+            console.log('Receiving message...');
+            const response = await api.get('/receive/')
+            const receivedMessage = response.data['RECEIVED MESSAGE'];
+            
+            setReceivedMessages(prevMessages => [...prevMessages, { text: receivedMessage, type: 'received' }]);
+            console.log('Message received!');
+            
+        } catch(error) {
+            console.error('Error receiving message:', error);
+            setErrorMsg(error.message || 'An unexpected error occurred please try again later')
+        }
     };
 
-    const sendMessage = async () => {
-        return new Promise((resolve, reject) => {
-            api.post('/send/', { "user_message": sentMessage })
-                .then(response => {
-                    console.log(`Sending user message:'${sentMessage}'...`);
-                    profanityCall(sentMessage).then(score =>{
-                        if (score < 0.8200) {
-                            setReceivedMessages(prevMessages => [...prevMessages, { text: sentMessage, type: 'sent' }]);
-                            setSentMessage('');
-                            setError(null)
-                            console.log('Message sent successfully!');
-                            resolve(response.status);
-                        } else {
-                            setError('Please exclude any possible profanity in your message!!!');
-                            reject('Possible profanity detected, rejecting message');
-                            console.log('MESSAGE REJECTED');
-                        }
-                    }).catch(error =>{
-                        console.error('Error in profanity checkin process', error);
-                        setError('Error in profanity checking process!!\nPlease try again later');
-                    })
-                })
-                .catch(error => {
-                    console.error('Error sending data: ', error);
-                    setError(error);
-                    reject(error);
-                })
-        });
+    const sendMessage = async() => {
+        try {
+            if (errorMsg) setErrorMsg(null);
+
+            console.log(`Sending user message "${sentMessage}"...`);
+            const response = api.post('/send/', {"user_message": sentMessage});
+            
+            const msgScore = await profanityCall(sentMessage);
+            if(msgScore < 0.8200) {
+                setReceivedMessages(prevMessages => [...prevMessages, { text: sentMessage, type: 'sent' }]);
+                setSentMessage('');
+                console.log('Message sent successfully');
+                return response.status
+            } else {
+                setErrorMsg('Please exclude any possible profanity in your message!!!');
+                console.log('MESSAGE REJECTED');
+                throw new Error('Possible profanity detected, rejecting message');
+            }
+        } catch(error) {
+            console.error('Error sending message: ', error);
+            setErrorMsg(error.message || 'An unexpected error occured please try again later');
+            throw error
+        }
     };
 
     const handleInputChange = (e) => {
@@ -66,7 +59,7 @@ export default function Home() {
         try {
             await sendMessage();
         } catch (error) {
-            setError(error);
+            setErrorMsg(error);
         }
     };
 
@@ -74,7 +67,7 @@ export default function Home() {
         try {
             await receiveMessage();
         } catch (error) {
-            setError(error);
+            setErrorMsg(error);
         }
     };
 
@@ -88,7 +81,7 @@ export default function Home() {
                 <h1>Send a message!</h1>
             </div>
             <hr />
-            {error && <div>Error: {error}</div>}
+            {errorMsg && <div>Error: {errorMsg}</div>}
             <div className={styles.chat}>
                 {receivedMessages.map((msg, index) => (
                     <div key={index} className={msg.type === 'sent' ? styles.sent : styles.received}>
